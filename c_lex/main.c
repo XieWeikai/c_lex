@@ -12,7 +12,7 @@ char *keywords[] = {
         "struct","switch","typedef","union","unsigned","void","volatile","while",
 };
 
-void upper(char *buff,char *s){
+static void upper(char *buff,char *s){
     char ch;
     while((ch = *s++) != 0)
         *buff++ = ch - 'a' + 'A';
@@ -74,7 +74,7 @@ void generate_buildin_code(){
 }
 
 int main() {
-    char *file_name = "test.c";
+    char *file_name = "test.txt";
     lex l;
     init_lex(file_name,&l);
 
@@ -82,7 +82,14 @@ int main() {
     char buff[128];
     while((token = next(&l)) != EOF){
         format_token(token,buff);
-        printf("%s:%d:%d <%s,>  text:%s\n",file_name,l.line,(int)(l.pos-strlen(l.text)),buff,l.text);
+        if(token < ID)
+            printf("%s:%d:%d < %s, >  text:%s\n", file_name, l.token_line, l.token_pos, buff, l.text);
+        if(token == ID)
+            printf("%s:%d:%d < %s, %p >  text:%s\n", file_name, l.token_line,  l.token_pos, buff, l.val.value.data, l.text);
+        if(token == STR)
+            printf("%s:%d:%d < %s, %s>  text:%s\n", file_name, l.token_line,  l.token_pos, buff, l.val.value.str, l.text);
+        if(token == ERROR)
+            printf("%s:%d:%d:error:%s\n",file_name, l.token_line,  l.token_pos,l.err_msg);
     }
 
     return 0;

@@ -27,6 +27,7 @@ typedef struct item{
 
 typedef struct token_value {
     int type;                          // one of macros defined above
+    char *str_ptr;                     // used only if type is STRING_TYPE
     union {
         int ch;                        // CHAR_TYPE
         int integer;                   // INT_TYPE
@@ -48,6 +49,8 @@ typedef struct lex {
 
     int line; // line number
     int pos;  // position in current line
+    int token_pos; // position before scanning current token
+    int token_line;  // line number before scanning current token
     int num_ch; // number of chars read
 
     char err_msg[LEX_MAX_STR_LEN + 1]; // only used when token is ERROR
@@ -57,10 +60,10 @@ typedef enum token{
 
     // [ ] { } ( ) . & * + - ~  ! / % < > ^ | ? : ; = ,
     // 这些只有一个符号的直接当成token
-    // -> ++ -- << <= >= == != && ||  *= /= %= += -=
+    // -> ++ -- << >> <= >= == != && ||  *= /= %= += -=
 
     // >= 256 防止出现ascii 码中的数字
-    ARROR=256,INC,DEC,LEFT_SHIFT,LE,GE,EQ,NE,AND,OR,MUL_ASSIGN,DIV_ASSIGN,MOD_ASSIGN,ADD_ASSIGN,SUB_ASSIGN,
+    ARROW=256,INC,DEC,LEFT_SHIFT,RIGHT_SHIFT,LE,GE,EQ,NE,AND,OR,MUL_ASSIGN,DIV_ASSIGN,MOD_ASSIGN,ADD_ASSIGN,SUB_ASSIGN,
     // 上面的都是punctuator
     AUTO,BREAK,CASE,CHAR,CONST,CONTINUE,DEFAULT,DO,
     DOUBLE,ELSE,ENUM,EXTERN,FLOAT,FOR,GOTO,IF,
