@@ -127,8 +127,7 @@ static int is_in(int ch, char *s) {
 
 int state0(lex *l) { // initial state
     if (IS_LETTER(l->cur_ch) || l->cur_ch == '_') { // ID    goto state 1
-        *(l->text_ptr++) = l->cur_ch;
-        l->cur_ch = getc(l->lex_in);
+        NEXT_CHAR(l);
         return 1;
     }
 
@@ -141,26 +140,27 @@ int state0(lex *l) { // initial state
     // need to look ahead
     if (is_in(l->cur_ch, "&*+-!/%<=>|")) {
         l->token = l->cur_ch; // store current char so next state can decide which punctuator it is
-        *(l->text_ptr++) = l->cur_ch;
-        l->cur_ch = getc(l->lex_in);
+        NEXT_CHAR(l);
         return 2;
     }
 
+    // string
     if (l->cur_ch == '"') {
-        *(l->text_ptr++) = l->cur_ch;
-        l->cur_ch = getc(l->lex_in);
+        NEXT_CHAR(l);
         l->val.str_ptr = l->val.value.str;
         return 6;
+    }
+
+    if(l->cur_ch == '\'') {
+        NEXT_CHAR(l);
+        return 7;
     }
 
     // []{}().^?:;,~
     // return char as token directly
     l->token = l->cur_ch;
-    l->cur_ch = getc(l->lex_in);
-    *(l->text_ptr++) = l->token;
-    *(l->text_ptr) = 0;
-    l->text_ptr = l->text;
-    return END_STATE;
+    NEXT_CHAR(l);
+    return 11;
 }
 
 // skip line comment
@@ -347,7 +347,7 @@ int state6(lex *l) {
                 continue;
             }
             while(*l->text_ptr != '"')
-                l->text_ptr --;
+                l->text_ptr --; // to delete white space at the end of text
             l->text_ptr[1] = 0;
             l->text_ptr = l->text;
             l->token = STR;
@@ -399,8 +399,76 @@ int state6(lex *l) {
     }
 }
 
+int state7(lex *l){
+    int tmp_ch = l->cur_ch;
+    NEXT_CHAR(l);
+    if(tmp_ch == '\\')
+        return 8;
+    else if(tmp_ch == '\''){
+        l->token = ERROR;
+        sprintf(l->err_msg,"empty char");
+        return 11;
+    }else{
+        l->val.type = CHAR_TYPE;
+        l->val.value.ch = tmp_ch;
+        return 9;
+    }
+}
+
+// 简单的处理转义
+int state8(lex *l){
+    l->val.type = CHAR_TYPE;
+    switch (l->cur_ch) {
+        case 'n':
+            l->val.value.ch = '\n';
+            break;
+        case 't':
+            l->val.value.ch = '\t';
+            break;
+        case 'r':
+            l->val.value.ch = '\r';
+            break;
+        default:
+            l->val.value.ch = l->cur_ch;
+    }
+    NEXT_CHAR(l);
+    return 9;
+}
+
+int state9(lex *l){
+    int tmp_ch = l->cur_ch;
+    NEXT_CHAR(l);
+    if(tmp_ch == '\''){
+        l->token = CHARACTER;
+        return 11;
+    } else
+        return 10;
+}
+
+int state10(lex *l){
+    int tmp_ch = l->cur_ch;
+    NEXT_CHAR(l);
+    if(tmp_ch == '\''){
+        l->token = ERROR;
+        sprintf(l->err_msg,"multiple chars in \'\'");
+        return 11;
+    }
+    if(tmp_ch == EOF){
+        l->token = ERROR;
+        sprintf(l->err_msg,"reach EOF when parsing character");
+        return 11;
+    }
+    return 10;
+}
+
+int state11(lex *l) {
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
+    return END_STATE;
+}
+
 static func states[128] = {
-        state0, state1, state2, state3, state4, state5, state6
+        state0, state1, state2, state3, state4, state5, state6,state7,state8,state9,state10,state11,
 };
 
 int next(lex *l) {

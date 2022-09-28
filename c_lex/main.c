@@ -90,6 +90,8 @@ int main() {
             printf("%s:%d:%d < %s, %s>  text:%s\n", file_name, l.token_line,  l.token_pos, buff, l.val.value.str, l.text);
         if(token == ERROR)
             printf("%s:%d:%d:error:%s\n",file_name, l.token_line,  l.token_pos,l.err_msg);
+        if(token == CHARACTER)
+            printf("%s:%d:%d < %s, %c>  text:%s\n", file_name, l.token_line,  l.token_pos, buff, l.val.value.ch, l.text);
     }
 
     return 0;
