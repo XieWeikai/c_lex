@@ -2,6 +2,7 @@
 // Created by 谢卫凯 on 2022/9/23.
 //
 #include <stdio.h>
+#include <math.h>
 
 #include "lex.h"
 
@@ -154,6 +155,11 @@ int state0(lex *l) { // initial state
     if(l->cur_ch == '\'') {
         NEXT_CHAR(l);
         return 7;
+    }
+
+    if(IS_NUMBER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 12;
     }
 
     // []{}().^?:;,~
@@ -461,14 +467,165 @@ int state10(lex *l){
     return 10;
 }
 
+// state to end the scan
 int state11(lex *l) {
     *l->text_ptr = 0;
     l->text_ptr = l->text;
     return END_STATE;
 }
 
+int state12(lex *l){
+    if (IS_NUMBER(l->cur_ch)) {
+        NEXT_CHAR(l);
+        return 12;
+    }
+
+    if (l->cur_ch == 'e' || l->cur_ch == 'E'){ // scientific notation
+        NEXT_CHAR(l);
+        return 15;
+    }
+
+    if (l->cur_ch == '.'){
+        NEXT_CHAR(l);
+        return 13;
+    }
+
+    if (IS_LETTER(l->cur_ch)) { // ERROR number with wrong suffix
+        NEXT_CHAR(l);
+        return 19;
+    }
+
+    int tmp;
+
+    l->token = INTEGER;
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
+    sscanf(l->text,"%d",&tmp);
+    l->val.type = INT_TYPE;
+    l->val.value.integer = tmp;
+    return END_STATE;
+}
+
+
+int state13(lex *l){
+    if(IS_NUMBER(l->cur_ch)) {
+        NEXT_CHAR(l);
+        return 14;
+    }
+    // ERROR number end with a .
+    l->token = ERROR;
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
+    sprintf(l->err_msg,"number end with .");
+    return END_STATE;
+}
+
+int state14(lex *l){
+    if(IS_NUMBER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 14;
+    }
+
+    if (l->cur_ch == 'e' || l->cur_ch == 'E'){ // scientific notation
+        NEXT_CHAR(l);
+        return 15;
+    }
+
+    if (IS_LETTER(l->cur_ch)) { // ERROR number with wrong suffix
+        NEXT_CHAR(l);
+        return 19;
+    }
+
+    double tmp;
+
+    l->token = DECIMAL;
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
+    sscanf(l->text,"%lf",&tmp);
+    l->val.type = DECIMAL_TYPE;
+    l->val.value.decimal = tmp;
+    return END_STATE;
+
+}
+
+int state15(lex *l){
+    if(IS_NUMBER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 17;
+    }
+    if(l->cur_ch == '+' || l->cur_ch == '-') {
+        NEXT_CHAR(l);
+        return 16;
+    }
+    // ERROR number with wrong suffix
+    NEXT_CHAR(l);
+    return 19;
+}
+
+int state16(lex *l){
+    if(IS_NUMBER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 17;
+    }
+
+    // ERROR number with wrong suffix
+    NEXT_CHAR(l);
+    return 19;
+}
+
+int state17(lex *l){
+    if(IS_NUMBER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 17;
+    }
+
+    if(IS_LETTER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 19;
+    }
+
+    char *p = l->text;
+    double a,b;
+    char tmp;
+
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
+    l->token = DECIMAL;
+    l->val.type = DECIMAL_TYPE;
+    while(*p != 'e' && *p != 'E' )
+        p++;
+    tmp = *p;
+    *p = 0;
+    sscanf(l->text,"%lf",&a);
+    sscanf(p+1,"%lf",&b);
+    l->val.value.decimal = a * pow(10.0,b);
+    *p = tmp;
+    return END_STATE;
+}
+
+
+// not used
+int state18(lex *l){
+    return END_STATE;
+}
+
+// ERROR number with invalid suffix
+int state19(lex *l){
+    if(IS_LETTER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 19;
+    }
+
+    l->token = ERROR;
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
+    sprintf(l->err_msg,"number with invalid suffix");
+    return END_STATE;
+}
+
 static func states[128] = {
         state0, state1, state2, state3, state4, state5, state6,state7,state8,state9,state10,state11,
+        state12,state13,state14,state15,state16,state17,state18,state19,
 };
 
 int next(lex *l) {

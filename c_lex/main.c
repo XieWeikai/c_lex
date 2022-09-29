@@ -1,98 +1,73 @@
 #include <stdio.h>
-#include <string.h>
 
-#include "trie.h"
 #include "lex.h"
 #include "format.h"
-
-char *keywords[] = {
-        "auto","break","case","char","const","continue","default","do",
-        "double","else","enum","extern","float","for","goto","if",
-        "int","long","register","return","short","signed","sizeof","static",
-        "struct","switch","typedef","union","unsigned","void","volatile","while",
-};
-
-static void upper(char *buff,char *s){
-    char ch;
-    while((ch = *s++) != 0)
-        *buff++ = ch - 'a' + 'A';
-    *buff = 0;
-}
-
-void generate_enum(){
-    char buff[100];
-
-    printf("typedef enum token{\n\t");
-    for (int i = 0; i < 32; i++) {
-        upper(buff,keywords[i]);
-        printf("%s,",buff);
-    }
-    printf("\n}token;\n");
-}
-
-void test_trie_tree(){
-    dict d = new_dict();
-    int score;
-
-    score = 95;
-    trie_insert(d, "xwk", &score, sizeof(score));
-
-    score = 96;
-    trie_insert(d, "wql", &score, sizeof(score));
-
-    score = 98;
-    trie_insert(d, "yr", &score, sizeof(score));
-
-    if(get_key_data(d,"wql",&score))
-        printf("wql:%d\n", score);
-
-    if(get_key_data(d,"yr",&score))
-        printf("yr:%d\n", score);
-
-    if(get_key_data(d,"xwk",&score))
-        printf("xwk:%d\n", score);
-
-    int *p = get_key_data_ptr(d,"xwk");
-    *p = 99;
-
-    if(get_key_data(d,"xwk",&score))
-        printf("after modifying score;xwk:%d\n", score);
-
-    destroy_trie_tree(d);
-
-    printf("destroyed the trie tree\n");
-}
-
-void generate_buildin_code(){
-    printf("item data;\n");
-    char buff[128];
-    for (int i = 0; i < 32; i++) {
-        upper(buff,keywords[i]);
-        printf("data.token = %s;\n", buff);
-        printf("trie_insert(l->symbols,\"%s\",&data,sizeof(data));\n",keywords[i]);
-    }
-}
 
 int main() {
     char *file_name = "test.txt";
     lex l;
     init_lex(file_name,&l);
 
+    int punctuator = 0;
+    int id = 0;
+    int keyword = 0;
+    int str = 0;
+    int error = 0 ;
+    int integer = 0;
+    int decimal = 0;
+    int character = 0;
+
+
     int token;
     char buff[128];
     while((token = next(&l)) != EOF){
         format_token(token,buff);
-        if(token < ID)
+        if(token < ID) {
             printf("%s:%d:%d < %s, >  text:%s\n", file_name, l.token_line, l.token_pos, buff, l.text);
-        if(token == ID)
-            printf("%s:%d:%d < %s, %p >  text:%s\n", file_name, l.token_line,  l.token_pos, buff, l.val.value.data, l.text);
-        if(token == STR)
-            printf("%s:%d:%d < %s, %s>  text:%s\n", file_name, l.token_line,  l.token_pos, buff, l.val.value.str, l.text);
-        if(token == ERROR)
-            printf("%s:%d:%d:error:%s\n",file_name, l.token_line,  l.token_pos,l.err_msg);
-        if(token == CHARACTER)
-            printf("%s:%d:%d < %s, %c>  text:%s\n", file_name, l.token_line,  l.token_pos, buff, l.val.value.ch, l.text);
+            if(token >= AUTO)
+                keyword ++;
+        } else punctuator ++;
+        if(token == ID) {
+            printf("%s:%d:%d < %s, %p >  text:%s\n", file_name, l.token_line, l.token_pos, buff, l.val.value.data,
+                   l.text);
+            id ++;
+        }
+        if(token == STR) {
+            printf("%s:%d:%d < %s, %s>  text:%s\n", file_name, l.token_line, l.token_pos, buff, l.val.value.str,
+                   l.text);
+            str ++;
+        }
+        if(token == ERROR) {
+            printf("%s:%d:%d:error:%s\n", file_name, l.token_line, l.token_pos, l.err_msg);
+            error ++;
+        }
+        if(token == CHARACTER) {
+            printf("%s:%d:%d < %s, %c>  text:%s\n", file_name, l.token_line, l.token_pos, buff, l.val.value.ch, l.text);
+            character ++;
+        }
+        if(token == INTEGER) {
+            printf("%s:%d:%d < %s, %d>  text:%s\n", file_name, l.token_line, l.token_pos, buff, l.val.value.integer,
+                   l.text);
+            integer ++;
+        }
+        if(token == DECIMAL) {
+            printf("%s:%d:%d < %s, %lf>  text:%s\n", file_name, l.token_line, l.token_pos, buff, l.val.value.decimal,
+                   l.text);
+            decimal ++;
+        }
     }
+
+    printf("-----------------------------------------\n");
+    printf("punctuator:  %d\n",punctuator);
+    printf("id:  %d\n",id);
+    printf("keywords:  %d\n",keyword);
+    printf("string:  %d\n",str);
+    printf("error:  %d\n",error);
+    printf("integer:  %d\n",integer);
+    printf("integer:  %d\n",integer);
+    printf("decimal:  %d\n",decimal);
+    printf("character:  %d\n",character);
+
 
     return 0;
 }

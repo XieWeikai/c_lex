@@ -3,6 +3,5 @@ project(c_lex C)
 
 set(CMAKE_C_STANDARD 99)
 
-aux_source_directory(. SRC)
-
-add_executable(c_lex ${SRC})
+add_executable(c_lex main.c format.c lex.c trie.c)
+add_executable(helper helper.c)
