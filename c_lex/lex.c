@@ -297,11 +297,9 @@ int state2(lex *l) {
             break;
     }
     if (mul_char) {
-        *(l->text_ptr++) = l->cur_ch;
-        l->cur_ch = getc(l->lex_in);
+        NEXT_CHAR(l);
         // count here (this function return END_STATE,meaning that next function will not count when return to next function)
-        l->pos++;
-        l->num_ch++;
+        return 11;
     }
 
     *l->text_ptr = 0;
@@ -433,6 +431,9 @@ int state8(lex *l){
             break;
         case 'r':
             l->val.value.ch = '\r';
+            break;
+        case '0':
+            l->val.value.ch = '\0';
             break;
         default:
             l->val.value.ch = l->cur_ch;

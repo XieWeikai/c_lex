@@ -68,6 +68,8 @@ int main() {
     printf("decimal:  %d\n",decimal);
     printf("character:  %d\n",character);
 
+    printf("total number of character:%d\n",l.num_ch);
+
 
     return 0;
 }
