@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "c_lexical_analyzer.h"
 
-#define COUNT() do{cur_line_pos += yyleng;char_num += yyleng;}while(0);
+#define COUNT() do{cur_line_pos += yyleng;char_num += yyleng;}while(0)
 %}
 NUM [0-9]
 POSITIVE_NUM [1-9]
@@ -27,8 +27,9 @@ PUNCT   "?"|":"|","|";"|"."|"("|")"|"{"|"}"
 {NUM}+"."{NUM}+[a-df-zA-DF-Z]+ {COUNT();sprintf(error_msg,"bad float number!");return -2;}
 {NUM}+"."{NUM}+ {COUNT();float_val = atof(yytext);return FLOAT_NUM;}
 
-    /* 0x开头和0开头暂缓，先不做考虑 */
 {POSITIVE_NUM}{NUM}*|{NUM}    {COUNT();integer_val = atoi(yytext);return INTEGER;}
+0x[0-9a-fA-F]+                {COUNT();integer_val = strtol(yytext,NULL,0);return INTEGER;}
+0[0-7]+                       {COUNT();integer_val = strtol(yytext,NULL,0);return INTEGER;}
 
 "'" {COUNT();BEGIN(character);}
 
@@ -75,7 +76,7 @@ PUNCT   "?"|":"|","|";"|"."|"("|")"|"{"|"}"
 
     [^\\\n\"]+        {
         char *yptr = yytext;
-
+        COUNT();
         while ( *yptr )
                 *str_buff_ptr++ = *yptr++;
         }
@@ -153,11 +154,3 @@ PUNCT   "?"|":"|","|";"|"."|"("|")"|"{"|"}"
 int yywrap(){
     return 1;
 }
-
-/*
- enum token{FOR,WHILE,CONTINUE,BREAK,IF,ELSE,SWITCH,CASE,
-        DEFAULT,DO,STRUCT,UNION,ENUM,STATIC,EXTERN,TYPEDEF,RETURN,CONST,
-        CHAR,SHORT,INT,FLOAT,DOUBLE,UNSIGNED,VOID,
-        //以上为关键字
-        OP,CHARACTER,STR,INTEGER,FLOAT_NUM,ID};
- */

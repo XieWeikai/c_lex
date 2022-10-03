@@ -19,5 +19,6 @@ int main(int argc,char *argv[]) {
         printf("%s:%d:%d     ",argv[1],line_num,cur_line_pos);
         print_token(token);
     }
+    printf("total number of characters:%d\n",char_num);
     return 0;
 }
