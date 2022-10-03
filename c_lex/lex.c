@@ -2,6 +2,7 @@
 // Created by 谢卫凯 on 2022/9/23.
 //
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include "lex.h"
@@ -154,6 +155,12 @@ int state0(lex *l) { // initial state
     if(l->cur_ch == '\'') {
         NEXT_CHAR(l);
         return 7;
+    }
+
+    // hex or oct number
+    if(l->cur_ch == '0'){
+        NEXT_CHAR(l);
+        return 18;
     }
 
     if(IS_NUMBER(l->cur_ch)){
@@ -618,6 +625,30 @@ int state17(lex *l){
 
 // not used
 int state18(lex *l){
+    // hex number
+    if(l->cur_ch == 'x' || l->cur_ch == 'X'){
+        NEXT_CHAR(l);
+        return 20;
+    }
+
+    // oct number
+    if(l->cur_ch >= '0' && l->cur_ch <= '7'){
+        NEXT_CHAR(l);
+        return 21;
+    }
+
+    // invalid suffix
+    if(IS_LETTER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 19;
+    }
+
+    // just number zero
+    l->token = INTEGER;
+    l->val.type = INT_TYPE;
+    l->val.value.integer = 0;
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
     return END_STATE;
 }
 
@@ -635,9 +666,73 @@ int state19(lex *l){
     return END_STATE;
 }
 
+// handling hex number starting with 0x or 0X
+int state20(lex *l){
+    // hex number
+    if((l->cur_ch >= 'a' && l->cur_ch <= 'f') || (l->cur_ch >= 'A' && l->cur_ch <= 'F') || IS_NUMBER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 20;
+    }
+
+    // number with invalid suffix
+    if(IS_LETTER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 19;
+    }
+
+    l->token = INTEGER;
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
+    l->val.type = INT_TYPE;
+    l->val.value.integer = strtol(l->text,NULL,0);
+    return END_STATE;
+}
+
+// handling oct number starting with 0
+int state21(lex *l){
+    // hex number
+    if(l->cur_ch >= '0' && l->cur_ch <= '7'){
+        NEXT_CHAR(l);
+        return 21;
+    }
+
+    // invalid oct number
+    if(l->cur_ch >= '8' && l->cur_ch <= '9'){
+        NEXT_CHAR(l);
+        return 22;
+    }
+
+    // number with invalid suffix
+    if(IS_LETTER(l->cur_ch)){
+        NEXT_CHAR(l);
+        return 19;
+    }
+
+    l->token = INTEGER;
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
+    l->val.type = INT_TYPE;
+    l->val.value.integer = strtol(l->text,NULL,0);
+    return END_STATE;
+}
+
+// invalid oct number
+int state22(lex *l){
+    if(l->cur_ch >= '8' && l->cur_ch <= '9'){
+        NEXT_CHAR(l);
+        return 22;
+    }
+
+    l->token = ERROR;
+    *l->text_ptr = 0;
+    l->text_ptr = l->text;
+    sprintf(l->err_msg,"invalid oct number");
+    return END_STATE;
+}
+
 static func states[128] = {
         state0, state1, state2, state3, state4, state5, state6,state7,state8,state9,state10,state11,
-        state12,state13,state14,state15,state16,state17,state18,state19,
+        state12,state13,state14,state15,state16,state17,state18,state19,state20,state21,state22
 };
 
 int next(lex *l) {

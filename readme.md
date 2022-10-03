@@ -85,7 +85,7 @@ c语言字符串中有较多种转义字符，全部实现较为繁杂，在目�
 
 ### number
 
-在现在的实现中，程序可以识别十进制的整数，十进制的小数，可以识别科学计数法形式的小数，暂不支持十六进制八进制，也不支持后缀。
+在现在的实现中，程序可以识别十进制的整数、十六进制的整数、八进制的整数，十进制的小数，可以识别科学计数法形式的小数。
 
 ### 实现
 
@@ -620,11 +620,11 @@ while auto
 while
 
 99 89 76 54
-
+           0x123 07777 0xabg23 0012 0398
 int abc for if else
     auto leo dfn4_4j
 'a'
-  'b'    'c' 'fneinfie' '\t'
+  'b'    'c' 'fneinfie' '\t'  '\'
   ''
 []{}().^?   :;,~ // another comment here
     /*
@@ -638,7 +638,7 @@ int abc for if else
     // this is some comment here !
     >= == < - ldf else
     100.234 0.123 1.2e-3 123
-    159347
+    159347  // fineooifefi
          123abc \ @
     "fjinefinf
 ```
@@ -653,19 +653,26 @@ test.txt:5:1 < INTEGER, 99>  text:99
 test.txt:5:4 < INTEGER, 89>  text:89
 test.txt:5:7 < INTEGER, 76>  text:76
 test.txt:5:10 < INTEGER, 54>  text:54
+test.txt:6:12 < INTEGER, 291>  text:0x123
+test.txt:6:18 < INTEGER, 4095>  text:07777
+test.txt:6:24:error:number with invalid suffix
+test.txt:6:29 < INTEGER, 23>  text:23
+test.txt:6:32 < INTEGER, 10>  text:0012
+test.txt:6:37:error:invalid oct number
 test.txt:7:1 < INT, >  text:int
-test.txt:7:5 < ID, 0x7fda71405c90 >  text:abc
+test.txt:7:5 < ID, 0x7f86c1504280 >  text:abc
 test.txt:7:9 < FOR, >  text:for
 test.txt:7:13 < IF, >  text:if
 test.txt:7:16 < ELSE, >  text:else
 test.txt:8:5 < AUTO, >  text:auto
-test.txt:8:10 < ID, 0x7fda71405ca0 >  text:leo
-test.txt:8:14 < ID, 0x7fda71405cb0 >  text:dfn4_4j
+test.txt:8:10 < ID, 0x7f86c1504290 >  text:leo
+test.txt:8:14 < ID, 0x7f86c15042a0 >  text:dfn4_4j
 test.txt:9:1 < CHARACTOR, a>  text:'a'
 test.txt:10:3 < CHARACTOR, b>  text:'b'
 test.txt:10:10 < CHARACTOR, c>  text:'c'
 test.txt:10:14:error:multiple chars in ''
 test.txt:10:25 < CHARACTOR, 	>  text:'\t'
+test.txt:10:31:error:unclosed char
 test.txt:11:3:error:empty char
 test.txt:12:1 < '[', >  text:[
 test.txt:12:2 < ']', >  text:]
@@ -705,10 +712,12 @@ test.txt:22:5 < GE, >  text:>=
 test.txt:22:8 < EQ, >  text:==
 test.txt:22:11 < '<', >  text:<
 test.txt:22:13 < '-', >  text:-
-test.txt:22:15 < ID, 0x7fda71504080 >  text:ldf
+test.txt:22:15 < ID, 0x7f86c1604080 >  text:ldf
 test.txt:22:19 < ELSE, >  text:else
 test.txt:23:5 < DECIMAL, 100.234000>  text:100.234
-test.txt:23:13 < DECIMAL, 0.123000>  text:0.123
+test.txt:23:13 < INTEGER, 0>  text:0
+test.txt:23:14 < '.', >  text:.
+test.txt:23:15 < INTEGER, 123>  text:123
 test.txt:23:19 < DECIMAL, 0.001200>  text:1.2e-3
 test.txt:23:26 < INTEGER, 123>  text:123
 test.txt:24:5 < INTEGER, 159347>  text:159347
@@ -717,16 +726,15 @@ test.txt:25:17 < '\', >  text:\
 test.txt:25:19 < '@', >  text:@
 test.txt:26:5:error:reach EOF parsing string
 -----------------------------------------
-punctuator:  24
+punctuator:  32
 id:  4
 keywords:  10
 string:  2
-error:  5
-integer:  6
-integer:  6
-decimal:  3
+error:  8
+integer:  12
+decimal:  2
 character:  4
-total number of character:464
+total number of character:524
 ```
 
 输出形式为：文件名:行号:列号  < token  , token_val   >  text:该token对应的输入文件中的字符串。
