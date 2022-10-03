@@ -27,7 +27,6 @@ typedef struct item{
 
 typedef struct token_value {
     int type;                          // one of macros defined above
-    char *str_ptr;                     // used only if type is STRING_TYPE
     union {
         int ch;                        // CHAR_TYPE
         int integer;                   // INT_TYPE

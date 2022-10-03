@@ -1,12 +1,20 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "lex.h"
 #include "format.h"
 
-int main() {
-    char *file_name = "test.txt";
+int main(int argc,char *argv[]) {
+    if(argc <= 1){
+        fprintf(stderr,"no input file\n");
+        exit(-1);
+    }
     lex l;
-    init_lex(file_name,&l);
+    char *file_name = argv[1];
+    if(init_lex(file_name,&l) == -1){
+        fprintf(stderr,"lex initialization failed\n");
+        exit(-1);
+    }
 
     int punctuator = 0;
     int id = 0;
@@ -63,7 +71,6 @@ int main() {
     printf("keywords:  %d\n",keyword);
     printf("string:  %d\n",str);
     printf("error:  %d\n",error);
-    printf("integer:  %d\n",integer);
     printf("integer:  %d\n",integer);
     printf("decimal:  %d\n",decimal);
     printf("character:  %d\n",character);

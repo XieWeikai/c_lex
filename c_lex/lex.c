@@ -148,7 +148,6 @@ int state0(lex *l) { // initial state
     // string
     if (l->cur_ch == '"') {
         NEXT_CHAR(l);
-        l->val.str_ptr = l->val.value.str;
         return 6;
     }
 
@@ -333,6 +332,7 @@ int state1(lex *l) { // state to read an ID
 
 // start to handle string
 int state6(lex *l) {
+    char *ptr = l->val.value.str;
     while(1) {
         if(l->cur_ch == '"'){
             NEXT_CHAR(l);
@@ -356,7 +356,7 @@ int state6(lex *l) {
             l->text_ptr = l->text;
             l->token = STR;
             l->val.type = STRING_TYPE;
-            *(l->val.str_ptr) = 0;
+            *(ptr) = 0;
             return END_STATE;
         }else if(l->cur_ch == '\n'){ // ERROR unclosed string
             NEXT_CHAR(l);
@@ -372,19 +372,19 @@ int state6(lex *l) {
             l->pos ++;l->num_ch ++;
             switch (l->cur_ch) {
                 case 'n':
-                    *l->val.str_ptr++ = '\n';
+                    *ptr++ = '\n';
                     break;
                 case 't':
-                    *l->val.str_ptr++ = '\t';
+                    *ptr++ = '\t';
                     break;
                 case 'r':
-                    *l->val.str_ptr++ = '\r';
+                    *ptr++ = '\r';
                     break;
                 case '0':
-                    *l->val.str_ptr++ = '\0';
+                    *ptr++ = '\0';
                     break;
                 default:
-                    *l->val.str_ptr++ = l->cur_ch;
+                    *ptr++ = l->cur_ch;
                     break;
             }
             NEXT_CHAR(l);
@@ -396,7 +396,7 @@ int state6(lex *l) {
             sprintf(l->err_msg,"reach EOF parsing string");
             return END_STATE;
         } else{
-            *(l->val.str_ptr++) = l->cur_ch;
+            *(ptr++) = l->cur_ch;
             NEXT_CHAR(l);
             l->pos ++;l->num_ch ++;
         }
@@ -448,6 +448,10 @@ int state9(lex *l){
     if(tmp_ch == '\''){
         l->token = CHARACTER;
         return 11;
+    } else if(tmp_ch == '\n'){
+        l->token = ERROR;
+        sprintf(l->err_msg,"unclosed char");
+        return 11;
     } else
         return 10;
 }
@@ -460,6 +464,13 @@ int state10(lex *l){
         sprintf(l->err_msg,"multiple chars in \'\'");
         return 11;
     }
+
+    if(tmp_ch == '\n'){
+        l->token = ERROR;
+        sprintf(l->err_msg,"unclosed char");
+        return 11;
+    }
+
     if(tmp_ch == EOF){
         l->token = ERROR;
         sprintf(l->err_msg,"reach EOF when parsing character");
@@ -637,6 +648,8 @@ int next(lex *l) {
     l->token_pos = l->pos;
     l->token_line = l->line;
     while ((state = states[state](l)) != END_STATE) {
+        if(l->token == EOF)
+            break;
         if (last_ch == '\n') {
             l->line++;
             l->pos = 1;
